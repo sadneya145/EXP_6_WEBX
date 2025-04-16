@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registration Form</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f7fa;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+
+    input, datalist, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    input:focus, button:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+
+    input[type="password"] {
+      font-family: 'Arial', sans-serif;
+    }
+
+    input[type="text"], input[type="password"] {
+      color: #333;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    span {
+      font-size: 14px;
+      color: #ff3333;
+      display: block;
+      margin-top: -10px;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    #message.success {
+      color: #28a745;
+    }
+
+    #message.error {
+      color: #dc3545;
+    }
+
+    .datalist-container {
+      position: relative;
+    }
+
+    datalist {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .container {
+        width: 90%;
+        padding: 15px;
+      }
+      h2 {
+        font-size: 24px;
+      }
+      button {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Registration Form</h2>
+    <form id="regForm">
+      <input type="text" id="name" placeholder="Name" required />
+      <div class="datalist-container">
+        <input list="collegeList" id="college" placeholder="College" required />
+        <datalist id="collegeList">
+          <option value="Harvard University">
+          <option value="Stanford University">
+          <option value="MIT">
+          <option value="Caltech">
+          <option value="Oxford University">
+          <option value="Cambridge University">
+          <option value="IIT Bombay">
+          <option value="IIT Delhi">
+          <option value="IISc Bangalore">
+          <option value="NIT Trichy">
+        </datalist>
+      </div>
+      <input type="text" id="username" placeholder="Username" required />
+      <span id="username-msg"></span>
+      <input type="password" id="password" placeholder="Password" required />
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+      <span id="password-msg"></span>
+      <button type="submit">Register</button>
+    </form>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const usernameMsg = document.getElementById('username-msg');
+    const passwordMsg = document.getElementById('password-msg');
+    const form = document.getElementById('regForm');
+    const messageDiv = document.getElementById('message');
+
+    let existingUsernames = [];
+
+    // Load existing usernames asynchronously
+    function fetchExistingUsernames() {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'http://localhost:3000/usernames');
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          existingUsernames = JSON.parse(xhr.responseText);
+        }
+      };
+      xhr.send();
+    }
+
+    // Check username
+    usernameInput.addEventListener('input', function () {
+      const entered = usernameInput.value.trim();
+      if (existingUsernames.includes(entered)) {
+        usernameMsg.textContent = "Username already exists!";
+      } else {
+        usernameMsg.textContent = "";
+      }
+    });
+
+    // Check passwords match
+    confirmPasswordInput.addEventListener('input', function () {
+      if (confirmPasswordInput.value !== passwordInput.value) {
+        passwordMsg.textContent = "Passwords do not match!";
+      } else {
+        passwordMsg.textContent = "";
+      }
+    });
+
+    // Form submission
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const data = {
+        name: document.getElementById('name').value.trim(),
+        college: document.getElementById('college').value.trim(),
+        username: usernameInput.value.trim(),
+        password: passwordInput.value.trim(),
+        confirmPassword: confirmPasswordInput.value.trim(),
+      };
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'http://localhost:3000/register', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          const response = JSON.parse(xhr.responseText);
+          if (xhr.status === 200 && response.success) {
+            messageDiv.textContent = "Successfully Registered";
+            messageDiv.className = "success";
+            form.reset();
+            fetchExistingUsernames(); // Update list after registration
+          } else {
+            messageDiv.textContent =  response.message;
+            messageDiv.className = "error";
+          }
+        }
+      };
+      xhr.send(JSON.stringify(data));
+    });
+
+    fetchExistingUsernames();
+  </script>
+</body>
+</html>
